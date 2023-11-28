@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">My Attendance</string>
+    <string name="leave_date">Leave Date</string>
+    <string name="leave_reason">Leave reason</string>
+    <string name="advance_amount">Amount</string>
+    <string name="details">Details</string>
+</resources>
