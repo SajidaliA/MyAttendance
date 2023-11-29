@@ -80,6 +80,12 @@ fun AddEditAdvanceScreen(
     val coroutineScope = rememberCoroutineScope()
     var validationMessageShown by remember { mutableStateOf(false) }
     clearAdvance()
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val formattedDate by remember {
+        derivedStateOf {
+            DateTimeFormatter.ofPattern("dd MMM yyyy").format(selectedDate)
+        }
+    }
     if (isEdit) {
         advanceId?.let { it ->
             mainViewModel.getAdvanceById(it).observeAsState().value?.let {
@@ -90,6 +96,9 @@ fun AddEditAdvanceScreen(
             }
         }
 
+    }else{
+        dateOfTaken = formattedDate
+        monthOfAdvance = formattedDate.split(" ")[1]
     }
     suspend fun showValidationMsg() {
         if (!validationMessageShown) {
@@ -101,12 +110,8 @@ fun AddEditAdvanceScreen(
 
 
     var isEdited by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    val formattedDate by remember {
-        derivedStateOf {
-            DateTimeFormatter.ofPattern("dd MMM yyyy").format(selectedDate)
-        }
-    }
+
+
     val dateDialogState = rememberMaterialDialogState()
     var dateEdited by remember { mutableStateOf(false) }
 
@@ -233,10 +238,6 @@ fun AddEditAdvanceScreen(
                 Button(
                     colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.gStart)),
                     onClick = {
-                        if (dateEdited) {
-                            dateOfTaken = formattedDate
-                            monthOfAdvance = formattedDate.split(" ")[1]
-                        }
                         if (isEdited) {
                             if (isEdit) {
                                 updateAdvanceInDB(

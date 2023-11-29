@@ -100,6 +100,9 @@ fun AddEditLeaveScreen(
                 reason = it.reason
             }
         }
+    }else{
+        date = formattedDate
+        month = formattedDate.split(" ")[1]
     }
     suspend fun showValidationMsg() {
         if (!validationMessageShown) {
@@ -291,11 +294,6 @@ fun AddEditLeaveScreen(
                     Button(
                         colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.gStart)),
                         onClick = {
-                            if (dateEdited) {
-                                date = formattedDate
-                                month = formattedDate.split(" ")[1]
-                            }
-
                             if (isEdited) {
                                 if (isEdit) {
                                     updateLeaveInDB(

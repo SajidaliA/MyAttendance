@@ -36,16 +36,17 @@ class MainViewModel @Inject constructor(private val mainRepository: MainReposito
         getAllLeaves()
     }
 
-    fun deleteLeave(leave: Leave) {
+    fun deleteLeave(leave: Leave, month: String?) {
         mainRepository.deleteLeave(leave)
         getAllLeaves()
+        getLeaveByMonth(month = month)
     }
 
     fun getAllLeaves() {
         mainRepository.getAllLeaves()
     }
 
-    fun getLeaveByMonth(month: String) {
+    fun getLeaveByMonth(month: String?) {
        mainRepository.getLeaveByMonth(month)
     }
 
@@ -58,16 +59,17 @@ class MainViewModel @Inject constructor(private val mainRepository: MainReposito
         getAllAdvance()
     }
 
-    fun deleteAdvance(advance: Advance) {
+    fun deleteAdvance(advance: Advance, month: String?) {
         mainRepository.deleteAdvance(advance)
         getAllAdvance()
+        getAdvanceByMonth(month)
     }
 
     fun getAllAdvance() {
         mainRepository.getAllAdvance()
     }
 
-    fun getAdvanceByMonth(month: String) {
+    fun getAdvanceByMonth(month: String?) {
         mainRepository.getAdvanceByMonth(month)
     }
 

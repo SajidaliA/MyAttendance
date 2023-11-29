@@ -73,7 +73,6 @@ fun AdvanceListScreen(
 
     val advanceListByMonth: List<Advance> by mainViewModel.advanceListByMonth.observeAsState(initial = listOf())
     val advanceList: List<Advance> by mainViewModel.advanceList.observeAsState(initial = listOf())
-    var advancesToDisplay: List<Advance>
     val lazyListState = rememberLazyListState()
 
     Scaffold(
@@ -126,19 +125,21 @@ fun AdvanceListScreen(
 
                 }
 
-                advancesToDisplay = if (selectedMonth == currentYear) {
-                    advanceList
-                } else {
-                    advanceListByMonth
-                }
-                if (advancesToDisplay.isNotEmpty()) {
+
+                if ((selectedMonth == currentYear) && advanceList.isNotEmpty() || advanceListByMonth.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn(
                         modifier = Modifier.padding(vertical = 4.dp, horizontal = 20.dp),
                         state = lazyListState
                     ) {
-                        items(items = advancesToDisplay) { advance ->
-                            AdvanceCard(advance, navHostController)
+                        items(
+                            items = if (selectedMonth == currentYear) {
+                                advanceList
+                            } else {
+                                advanceListByMonth
+                            }
+                        ) { advance ->
+                            AdvanceCard(advance, navHostController, mainViewModel, selectedMonth)
                         }
                     }
 
@@ -169,7 +170,12 @@ fun AdvanceListScreen(
 
 
 @Composable
-fun AdvanceCard(advance: Advance, navHostController: NavHostController) {
+fun AdvanceCard(
+    advance: Advance,
+    navHostController: NavHostController,
+    mainViewModel: MainViewModel,
+    selectedMonth: String?
+) {
     Card(
         modifier = Modifier
             .padding(vertical = 10.dp)
@@ -201,8 +207,8 @@ fun AdvanceCard(advance: Advance, navHostController: NavHostController) {
                         .size(65.dp)
                         .clip(RoundedCornerShape(50.dp))
                 )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
+                Spacer(modifier = Modifier.width(20.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "₹${advance.amount}",
                         fontSize = 20.sp,
@@ -217,7 +223,19 @@ fun AdvanceCard(advance: Advance, navHostController: NavHostController) {
                         color = Color.Gray,
                         fontWeight = FontWeight.Light
                     )
+
                 }
+                Spacer(modifier = Modifier.width(10.dp))
+                Image(painter = painterResource(id = R.drawable.bin),
+                    contentDescription = "Delete",
+                    colorFilter = ColorFilter.tint(
+                        colorResource(id = R.color.gStart)
+                    ),
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clickable {
+                            mainViewModel.deleteAdvance(advance, selectedMonth)
+                        })
             }
         }
     }

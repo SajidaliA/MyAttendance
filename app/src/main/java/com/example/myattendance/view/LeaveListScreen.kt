@@ -71,7 +71,6 @@ fun LeaveListScreen(
 
     val leavesByMonth: List<Leave> by mainViewModel.leavesByMonth.observeAsState(initial = listOf())
     val leaves: List<Leave> by mainViewModel.allLeaves.observeAsState(initial = listOf())
-    var leavesToDisplay: List<Leave>
     val lazyListState = rememberLazyListState()
 
     Scaffold(
@@ -123,20 +122,18 @@ fun LeaveListScreen(
                     }
 
                 }
-
-                leavesToDisplay = if (selectedMonth == currentYear) {
-                    leaves
-                } else {
-                    leavesByMonth
-                }
-                if (leavesToDisplay.isNotEmpty()) {
+                if ((selectedMonth == currentYear && leaves.isNotEmpty()) || leavesByMonth.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn(
                         modifier = Modifier.padding(vertical = 4.dp, horizontal = 20.dp),
                         state = lazyListState
                     ) {
-                        items(items = leavesToDisplay) { leave ->
-                            LeaveCard(leave, navHostController)
+                        items(items = if (selectedMonth == currentYear) {
+                            leaves
+                        } else {
+                            leavesByMonth
+                        }) { leave ->
+                            LeaveCard(leave, navHostController, mainViewModel, selectedMonth)
                         }
                     }
 
@@ -167,7 +164,12 @@ fun LeaveListScreen(
 
 
 @Composable
-fun LeaveCard(leave: Leave, navHostController: NavHostController) {
+fun LeaveCard(
+    leave: Leave,
+    navHostController: NavHostController,
+    mainViewModel: MainViewModel,
+    selectedMonth: String?
+) {
     Card(
         modifier = Modifier
             .padding(vertical = 10.dp)
@@ -198,8 +200,8 @@ fun LeaveCard(leave: Leave, navHostController: NavHostController) {
                         .size(65.dp)
                         .clip(RoundedCornerShape(50.dp))
                 )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
+                Spacer(modifier = Modifier.width(20.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = leave.leaveType,
                         fontSize = 12.sp,
@@ -216,6 +218,17 @@ fun LeaveCard(leave: Leave, navHostController: NavHostController) {
                         color = Color.Black.copy(0.6f)
                     )
                 }
+                Spacer(modifier = Modifier.width(10.dp))
+                Image(painter = painterResource(id = R.drawable.bin),
+                    contentDescription = "Delete",
+                    colorFilter = ColorFilter.tint(
+                        colorResource(id = R.color.gStart)
+                    ),
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clickable {
+                            mainViewModel.deleteLeave(leave, selectedMonth)
+                        })
             }
         }
     }

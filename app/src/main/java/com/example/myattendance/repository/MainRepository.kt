@@ -63,7 +63,7 @@ class MainRepository(private val attendanceDao: AttendanceDao) {
         return attendanceDao.getAdvanceById(id)
     }
 
-    fun getLeaveByMonth(month: String)  {
+    fun getLeaveByMonth(month: String?)  {
         coroutineScope.launch(Dispatchers.IO) {
             leavesByMonth.postValue(attendanceDao.getLeaveByMonth(month))
         }
@@ -75,7 +75,7 @@ class MainRepository(private val attendanceDao: AttendanceDao) {
         }
     }
 
-    fun getAdvanceByMonth(month: String) {
+    fun getAdvanceByMonth(month: String?) {
         coroutineScope.launch(Dispatchers.IO) {
             advanceByMonth.postValue(attendanceDao.getAdvanceByMonth(month))
         }

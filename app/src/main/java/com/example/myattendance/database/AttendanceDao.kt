@@ -30,7 +30,7 @@ interface AttendanceDao {
     fun getAllLeaves() : List<Leave>
 
     @Query("select * from leave where month =:month")
-    fun getLeaveByMonth(month: String) : List<Leave>
+    fun getLeaveByMonth(month: String?) : List<Leave>
 
     @Query("select * from leave where id =:id")
     fun getLeaveById(id: String) : LiveData<Leave>
@@ -39,7 +39,7 @@ interface AttendanceDao {
     fun getAllAdvance() : List<Advance>
 
     @Query("select * from advance where month =:month")
-    fun getAdvanceByMonth(month: String) : List<Advance>
+    fun getAdvanceByMonth(month: String?) : List<Advance>
 
     @Query("select * from advance where id =:id")
     fun getAdvanceById(id: String) : LiveData<Advance>
