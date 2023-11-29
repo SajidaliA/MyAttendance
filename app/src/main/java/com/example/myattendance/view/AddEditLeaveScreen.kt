@@ -66,7 +66,6 @@ import java.time.format.DateTimeFormatter
  * Created by Sajid Ali Suthar.
  */
 
-var type: String = ""
 var date: String = ""
 var month: String = ""
 var reason: String = ""
@@ -80,18 +79,27 @@ fun AddEditLeaveScreen(
     leaveId: String?,
     isEdit: Boolean,
 ) {
-    lateinit var selectedLeave: Leave
-
     val coroutineScope = rememberCoroutineScope()
     var validationMessageShown by remember { mutableStateOf(false) }
+    var selectedLeaveType by remember { mutableStateOf("Full Day") }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val formattedDate by remember {
+        derivedStateOf {
+            DateTimeFormatter.ofPattern("dd MMM yyyy").format(selectedDate)
+        }
+    }
+    var dateEdited by remember { mutableStateOf(false) }
+
     clearAll()
     if (isEdit) {
-        leaveId?.let { mainViewModel.getLeaveById(it) }
-        selectedLeave = mainViewModel.leaveById.observeAsState().value!!
-        type = selectedLeave.leaveType
-        date = selectedLeave.date
-        month = selectedLeave.month
-        reason = selectedLeave.reason
+        leaveId?.let { it ->
+            mainViewModel.getLeaveById(it).observeAsState().value?.let {
+                selectedLeaveType = it.leaveType
+                date = it.date
+                month = it.month
+                reason = it.reason
+            }
+        }
     }
     suspend fun showValidationMsg() {
         if (!validationMessageShown) {
@@ -103,13 +111,8 @@ fun AddEditLeaveScreen(
 
     val scrollState = rememberScrollState()
     var isEdited by remember { mutableStateOf(false) }
-    var selectedLeaveType by remember { mutableStateOf("Full Day") }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    val formattedDate by remember {
-        derivedStateOf {
-            DateTimeFormatter.ofPattern("dd MMM yyyy").format(selectedDate)
-        }
-    }
+
+
     val dateDialogState = rememberMaterialDialogState()
 
     Scaffold(
@@ -137,7 +140,7 @@ fun AddEditLeaveScreen(
                                 ),
                                 shape = RoundedCornerShape(bottomEnd = 30.dp)
                             ),
-                    ){
+                    ) {
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -199,10 +202,11 @@ fun AddEditLeaveScreen(
                                 .weight(1f)
                                 .clickable {
                                     selectedLeaveType = "Full Day"
+                                    isEdited = true
                                 },
                             fontWeight = FontWeight.Light,
                             textAlign = TextAlign.Center,
-                            color =  if (selectedLeaveType == "Full Day") {
+                            color = if (selectedLeaveType == "Full Day") {
                                 Color.White
                             } else {
                                 colorResource(id = R.color.primaryColor)
@@ -228,6 +232,7 @@ fun AddEditLeaveScreen(
                                 .weight(1f)
                                 .clickable {
                                     selectedLeaveType = "Half Day"
+                                    isEdited = true
                                 },
                             fontWeight = FontWeight.Light,
                             textAlign = TextAlign.Center,
@@ -250,13 +255,14 @@ fun AddEditLeaveScreen(
                             )
                             .clickable {
                                 dateDialogState.show()
+                                isEdited = true
                             },
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
                             modifier = Modifier
                                 .padding(15.dp),
-                            text = "Leave Date: $formattedDate",
+                            text = if (isEdit && !dateEdited) "Leave Date: $date" else "Leave Date: $formattedDate",
                             style = MaterialTheme.typography.caption,
                             color = Color.DarkGray
                         )
@@ -285,13 +291,32 @@ fun AddEditLeaveScreen(
                     Button(
                         colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.gStart)),
                         onClick = {
-                            date = formattedDate
-                            month = formattedDate.split(" ")[1]
+                            if (dateEdited) {
+                                date = formattedDate
+                                month = formattedDate.split(" ")[1]
+                            }
+
                             if (isEdited) {
                                 if (isEdit) {
-                                    updateLeaveInDB(Leave(leaveId?.toInt(), selectedLeaveType, date, month, reason), mainViewModel)
+                                    updateLeaveInDB(
+                                        Leave(
+                                            leaveId?.toInt(),
+                                            selectedLeaveType,
+                                            date,
+                                            month,
+                                            reason
+                                        ), mainViewModel
+                                    )
                                 } else {
-                                    addLeaveInDB(Leave(id = null, leaveType = selectedLeaveType, date = date, month = month, reason = reason), mainViewModel)
+                                    addLeaveInDB(
+                                        Leave(
+                                            id = null,
+                                            leaveType = selectedLeaveType,
+                                            date = date,
+                                            month = month,
+                                            reason = reason
+                                        ), mainViewModel
+                                    )
                                 }
                                 clearAll()
                                 navHostController.popBackStack()
@@ -319,24 +344,24 @@ fun AddEditLeaveScreen(
                     }
 
                 }
-                MaterialDialog (dialogState = dateDialogState,
+                MaterialDialog(dialogState = dateDialogState,
                     buttons = {
                         positiveButton(text = "Ok")
                         negativeButton(text = "Cancel")
                     }) {
-                        datepicker(
-                            initialDate = LocalDate.now(),
-                            title = "Select leave date",
-                        ){
-                            selectedDate = it
-                        }
+                    datepicker(
+                        initialDate = if (isEdit && !dateEdited) LocalDate.parse(date, DateTimeFormatter.ofPattern("dd MMM yyyy")) else selectedDate,
+                        title = "Select leave date",
+                    ) {
+                        dateEdited = true
+                        selectedDate = it
+                    }
                 }
 
             }
         }
     )
 }
-
 
 
 fun addLeaveInDB(leave: Leave, mainViewModel: MainViewModel) {
@@ -348,7 +373,6 @@ fun updateLeaveInDB(leave: Leave, mainViewModel: MainViewModel) {
 }
 
 fun clearAll() {
-    type = ""
     date = ""
     month = ""
     reason = ""

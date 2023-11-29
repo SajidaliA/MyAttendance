@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Scaffold
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.myattendance.R
 import com.example.myattendance.database.Leave
+import com.example.myattendance.utils.AppScreens
 import com.example.myattendance.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -63,20 +63,24 @@ fun LeaveListScreen(
     val c = Calendar.getInstance()
     val yearNum = SimpleDateFormat("yyyy", Locale.ENGLISH)
     val currentYear = yearNum.format(c.time)
-    if (selectedMonth == currentYear){
+    if (selectedMonth == currentYear) {
         mainViewModel.getAllLeaves()
-    }else{
+    } else {
         mainViewModel.getLeaveByMonth(selectedMonth?.take(3).toString())
     }
 
     val leavesByMonth: List<Leave> by mainViewModel.leavesByMonth.observeAsState(initial = listOf())
     val leaves: List<Leave> by mainViewModel.allLeaves.observeAsState(initial = listOf())
-    var leavesToDisplay : List<Leave>
+    var leavesToDisplay: List<Leave>
     val lazyListState = rememberLazyListState()
 
     Scaffold(
         content = { padding ->
-            Column(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = colorResource(id = R.color.background))
+            ) {
 
                 Column(
                     modifier = Modifier
@@ -90,7 +94,7 @@ fun LeaveListScreen(
                             ),
                             shape = RoundedCornerShape(bottomEnd = 30.dp)
                         ),
-                ){
+                ) {
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -120,12 +124,13 @@ fun LeaveListScreen(
 
                 }
 
-                leavesToDisplay = if (selectedMonth == currentYear){
+                leavesToDisplay = if (selectedMonth == currentYear) {
                     leaves
-                }else{
+                } else {
                     leavesByMonth
                 }
                 if (leavesToDisplay.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn(
                         modifier = Modifier.padding(vertical = 4.dp, horizontal = 20.dp),
                         state = lazyListState
@@ -167,25 +172,22 @@ fun LeaveCard(leave: Leave, navHostController: NavHostController) {
         modifier = Modifier
             .padding(vertical = 10.dp)
             .fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(30.dp),
         backgroundColor = Color.White,
         elevation = 2.dp
     ) {
-        Column(modifier = Modifier
-            .padding(16.dp)
-//            .clickable {
-//                navHostController.navigate(
-//                    AppScreens.LeaveDetails.routeWithArgs(
-//                        leave.id.toString()
-//                    )
-//                )
-//            }
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .clickable {
+                    navHostController.navigate(AppScreens.AddEditLeave.route + "/" + leave.id + "/" + true)
+                }
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 )
-            )
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
@@ -198,9 +200,21 @@ fun LeaveCard(leave: Leave, navHostController: NavHostController) {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
+                    Text(
+                        text = leave.leaveType,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.W400,
+                        color = Color.Black.copy(0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(text = leave.date, fontSize = 20.sp, fontWeight = FontWeight.W300)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = leave.reason, fontSize = 12.sp, fontWeight = FontWeight.Light)
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Text(
+                        text = leave.reason,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.W400,
+                        color = Color.Black.copy(0.6f)
+                    )
                 }
             }
         }

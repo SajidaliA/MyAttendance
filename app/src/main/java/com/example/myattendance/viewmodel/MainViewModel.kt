@@ -17,10 +17,8 @@ class MainViewModel @Inject constructor(private val mainRepository: MainReposito
 
     var user: LiveData<User> = mainRepository.user
     var allLeaves: LiveData<List<Leave>> = mainRepository.allLeaves
-    var leaveById: LiveData<Leave> = mainRepository.leaveById
     var leavesByMonth: LiveData<List<Leave>> = mainRepository.leavesByMonth
     var advanceList: LiveData<List<Advance>> = mainRepository.allAdvance
-    var advanceById: LiveData<Advance> = mainRepository.advanceById
     var advanceListByMonth: LiveData<List<Advance>> = mainRepository.advanceByMonth
 
     fun updateUser(user: User?){
@@ -51,8 +49,8 @@ class MainViewModel @Inject constructor(private val mainRepository: MainReposito
        mainRepository.getLeaveByMonth(month)
     }
 
-    fun getLeaveById(id: String) {
-        mainRepository.getLeaveById(id)
+    fun getLeaveById(id: String): LiveData<Leave> {
+        return mainRepository.getLeaveById(id)
     }
 
     fun addAdvance(advance: Advance) {
@@ -73,8 +71,8 @@ class MainViewModel @Inject constructor(private val mainRepository: MainReposito
         mainRepository.getAdvanceByMonth(month)
     }
 
-    fun getAdvanceById(id: String) {
-        mainRepository.getAdvanceById(id)
+    fun getAdvanceById(id: String): LiveData<Advance> {
+        return mainRepository.getAdvanceById(id)
     }
 
     fun updateLeave(leave: Leave) {

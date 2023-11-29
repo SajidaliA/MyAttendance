@@ -73,7 +73,7 @@ fun AppRouter(
             AddEditAdvanceScreen(navController, mainViewModel, advanceId, isEdit!!)
         }
         composable(route = AppScreens.HomeScreen.route) {
-            HomeScreen(navController, mainViewModel, openDrawer)
+            HomeScreen(navController, mainViewModel)
         }
         composable(route = AppScreens.Account.route,
             enterTransition = {
@@ -105,6 +105,11 @@ fun AppRouter(
                 slideOutHorizontally(
                     targetOffsetX = { 1000 }
                 )
+            },
+            popEnterTransition = {
+                slideInHorizontally (
+                    initialOffsetX = { -1000 }
+                )
             }) {
             val selectedMonth = it.arguments?.getString("selectedMonth")
             LeaveListScreen(navController, mainViewModel, selectedMonth)
@@ -124,6 +129,11 @@ fun AppRouter(
             popExitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { 1000 }
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally (
+                    initialOffsetX = { -1000 }
                 )
             }) {
             val selectedMonth = it.arguments?.getString("selectedMonth")

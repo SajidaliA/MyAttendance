@@ -16,4 +16,5 @@
     <color name="secondaryTextColor">#000000</color>
     <color name="gStart">#0A5CAD</color>
     <color name="gEnd">#1150A6</color>
+    <color name="background">#F8F8F8</color>
 </resources>

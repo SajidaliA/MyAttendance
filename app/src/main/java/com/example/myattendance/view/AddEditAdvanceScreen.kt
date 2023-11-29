@@ -77,17 +77,19 @@ fun AddEditAdvanceScreen(
     advanceId: String?,
     isEdit: Boolean
 ) {
-    lateinit var selectedAdvance: Advance
     val coroutineScope = rememberCoroutineScope()
     var validationMessageShown by remember { mutableStateOf(false) }
     clearAdvance()
     if (isEdit) {
-        advanceId?.let { mainViewModel.getAdvanceById(it) }
-        selectedAdvance = mainViewModel.advanceById.observeAsState().value!!
-        dateOfTaken = selectedAdvance.date
-        amount = selectedAdvance.amount
-        monthOfAdvance = selectedAdvance.month
-        details = selectedAdvance.details
+        advanceId?.let { it ->
+            mainViewModel.getAdvanceById(it).observeAsState().value?.let {
+                dateOfTaken = it.date
+                amount = it.amount
+                monthOfAdvance = it.month
+                details = it.details
+            }
+        }
+
     }
     suspend fun showValidationMsg() {
         if (!validationMessageShown) {
@@ -106,174 +108,195 @@ fun AddEditAdvanceScreen(
         }
     }
     val dateDialogState = rememberMaterialDialogState()
+    var dateEdited by remember { mutableStateOf(false) }
 
     Scaffold(
         content = { padding ->
 
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    colorResource(id = R.color.gStart),
+                                    colorResource(id = R.color.gEnd)
+                                )
+                            ),
+                            shape = RoundedCornerShape(bottomEnd = 30.dp)
+                        ),
                 ) {
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        colorResource(id = R.color.gStart),
-                                        colorResource(id = R.color.gEnd)
-                                    )
-                                ),
-                                shape = RoundedCornerShape(bottomEnd = 30.dp)
-                            ),
-                    ){
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Image(
-                                modifier = Modifier
-                                    .size(65.dp)
-                                    .padding(20.dp)
-                                    .clickable { navHostController.popBackStack() },
-                                painter = painterResource(id = R.drawable.ic_back),
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(
-                                    Color.White
-                                )
-                            )
-
-                            Text(
-                                modifier = Modifier.padding(20.dp),
-                                text = if (isEdit) "Edit Advance" else "Add Advance",
-                                textAlign = TextAlign.Start,
-                                color = Color.White,
-                                style = androidx.compose.material.MaterialTheme.typography.h5,
-                                fontWeight = FontWeight.Light
-                            )
-                        }
-
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Image(
-                        painter = painterResource(id = R.drawable.money),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(350.dp)
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
-                            .fillMaxWidth()
-                            .height(55.dp)
-                            .border(
-                                BorderStroke(1.dp, Color.Gray),
-                                shape = RoundedCornerShape(50.dp)
-                            )
-                            .clickable {
-                                dateDialogState.show()
-                            },
-                        contentAlignment = Alignment.CenterStart
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
+                        Image(
                             modifier = Modifier
-                                .padding(15.dp),
-                            text = "Leave Date: $formattedDate",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.DarkGray
+                                .size(65.dp)
+                                .padding(20.dp)
+                                .clickable { navHostController.popBackStack() },
+                            painter = painterResource(id = R.drawable.ic_back),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(
+                                Color.White
+                            )
+                        )
+
+                        Text(
+                            modifier = Modifier.padding(20.dp),
+                            text = if (isEdit) "Edit Advance" else "Add Advance",
+                            textAlign = TextAlign.Start,
+                            color = Color.White,
+                            style = androidx.compose.material.MaterialTheme.typography.h5,
+                            fontWeight = FontWeight.Light
                         )
                     }
-                    CustomTextField(
+
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.money),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(350.dp)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                        .fillMaxWidth()
+                        .height(55.dp)
+                        .border(
+                            BorderStroke(1.dp, Color.Gray),
+                            shape = RoundedCornerShape(50.dp)
+                        )
+                        .clickable {
+                            dateDialogState.show()
+                            isEdited = true
+                        },
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        inputWrapper = amount,
-                        labelResId = R.string.advance_amount,
-                        maxLength = 7,
-                        maxLines = 1,
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.None,
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next
-                        ),
-                    ) {
-                        isEdited = true
-                        amount = it
-                    }
-                    CustomTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        inputWrapper = details,
-                        labelResId = R.string.details,
-                        maxLength = 100,
-                        maxLines = 3,
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.None,
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
-                        ),
-                    ) {
-                        isEdited = true
-                        details = it
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Button(
-                        colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.gStart)),
-                        onClick = {
+                            .padding(15.dp),
+                        text = if (isEdit && !dateEdited) "Advance Date: $dateOfTaken" else "Advance Date $formattedDate",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.DarkGray
+                    )
+                }
+                CustomTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    inputWrapper = amount,
+                    labelResId = R.string.advance_amount,
+                    maxLength = 7,
+                    maxLines = 1,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                ) {
+                    isEdited = true
+                    amount = it
+                }
+                CustomTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    inputWrapper = details,
+                    labelResId = R.string.details,
+                    maxLength = 100,
+                    maxLines = 3,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                ) {
+                    isEdited = true
+                    details = it
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+                Button(
+                    colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.gStart)),
+                    onClick = {
+                        if (dateEdited) {
                             dateOfTaken = formattedDate
                             monthOfAdvance = formattedDate.split(" ")[1]
-                            if (isEdited) {
-                                if (isEdit) {
-                                    updateAdvanceInDB(Advance(advanceId?.toInt(), amount, dateOfTaken, monthOfAdvance, details), mainViewModel)
-                                } else {
-                                    addAdvanceInDB(Advance(null, amount, dateOfTaken, monthOfAdvance, details), mainViewModel)
-                                }
-                                clearAdvance()
-                                navHostController.popBackStack()
+                        }
+                        if (isEdited) {
+                            if (isEdit) {
+                                updateAdvanceInDB(
+                                    Advance(
+                                        advanceId?.toInt(),
+                                        amount,
+                                        dateOfTaken,
+                                        monthOfAdvance,
+                                        details
+                                    ), mainViewModel
+                                )
                             } else {
-                                coroutineScope.launch {
-                                    showValidationMsg()
-                                }
+                                addAdvanceInDB(
+                                    Advance(
+                                        null,
+                                        amount,
+                                        dateOfTaken,
+                                        monthOfAdvance,
+                                        details
+                                    ), mainViewModel
+                                )
                             }
+                            clearAdvance()
+                            navHostController.popBackStack()
+                        } else {
+                            coroutineScope.launch {
+                                showValidationMsg()
+                            }
+                        }
 
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .padding(horizontal = 20.dp),
-                                shape = RoundedCornerShape(50.dp)
-                    ) {
-                        Text(
-                            text = if (isEdit) "UPDATE" else "ADD",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Light,
-                            color = Color.White,
-                            fontSize = 16.sp
-                        )
-                    }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .padding(horizontal = 20.dp),
+                    shape = RoundedCornerShape(50.dp)
+                ) {
+                    Text(
+                        text = if (isEdit) "UPDATE" else "ADD",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Light,
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
                 }
-                MaterialDialog (dialogState = dateDialogState,
-                    buttons = {
-                        positiveButton(text = "Ok")
-                        negativeButton(text = "Cancel")
-                    }) {
-                    datepicker(
-                        initialDate = LocalDate.now(),
-                        title = "Select advance date",
-                    ){
-                        selectedDate = it
-                    }
+            }
+            MaterialDialog(dialogState = dateDialogState,
+                buttons = {
+                    positiveButton(text = "Ok")
+                    negativeButton(text = "Cancel")
+                }) {
+                datepicker(
+                    initialDate = if (isEdit && !dateEdited) LocalDate.parse(dateOfTaken, DateTimeFormatter.ofPattern("dd MMM yyyy")) else selectedDate,
+                    title = "Select advance date",
+                ) {
+                    dateEdited = true
+                    selectedDate = it
                 }
+            }
         }
     )
 }

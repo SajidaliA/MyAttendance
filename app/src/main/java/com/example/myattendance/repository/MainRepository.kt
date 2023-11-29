@@ -1,5 +1,6 @@
 package com.example.myattendance.repository
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.myattendance.database.Advance
 import com.example.myattendance.database.AttendanceDao
@@ -16,11 +17,9 @@ class MainRepository(private val attendanceDao: AttendanceDao) {
 
     val user = MutableLiveData<User>()
     val allLeaves = MutableLiveData<List<Leave>>()
-    val leaveById = MutableLiveData<Leave>()
     val leavesByMonth = MutableLiveData<List<Leave>>()
     val allAdvance = MutableLiveData<List<Advance>>()
     val advanceByMonth = MutableLiveData<List<Advance>>()
-    val advanceById = MutableLiveData<Advance>()
     val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     fun addUser(user: User){
@@ -57,15 +56,11 @@ class MainRepository(private val attendanceDao: AttendanceDao) {
         }
     }
 
-    fun getLeaveById(id: String)  {
-        coroutineScope.launch(Dispatchers.IO) {
-            leaveById.postValue(attendanceDao.getLeaveById(id))
-        }
+    fun getLeaveById(id: String): LiveData<Leave>  {
+        return attendanceDao.getLeaveById(id)
     }
-    fun getAdvanceById(id: String)  {
-        coroutineScope.launch(Dispatchers.IO) {
-            advanceById.postValue(attendanceDao.getAdvanceById(id))
-        }
+    fun getAdvanceById(id: String): LiveData<Advance>  {
+        return attendanceDao.getAdvanceById(id)
     }
 
     fun getLeaveByMonth(month: String)  {

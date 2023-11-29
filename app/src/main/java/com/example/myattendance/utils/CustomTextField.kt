@@ -25,11 +25,12 @@ fun CustomTextField(
     maxLines: Int,
     onTextChanged: (String) -> Unit
 ) {
+    var textUpdated by remember { mutableStateOf(false) }
     var fieldValue by remember { mutableStateOf(inputWrapper) }
     val focusManager = LocalFocusManager.current
     Column {
         OutlinedTextField(
-            value = fieldValue,
+            value = if (textUpdated) fieldValue else inputWrapper,
             label = { Text(stringResource(labelResId), style = MaterialTheme.typography.caption) },
             maxLines = maxLines,
             keyboardOptions = keyboardOptions,
@@ -39,6 +40,7 @@ fun CustomTextField(
                     fieldValue = it
                     //text = value.filter { it.isDigit() }
                     onTextChanged(it)
+                    textUpdated = true
                 }
             },
             keyboardActions = KeyboardActions(

@@ -1,5 +1,6 @@
 package com.example.myattendance.database
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -32,7 +33,7 @@ interface AttendanceDao {
     fun getLeaveByMonth(month: String) : List<Leave>
 
     @Query("select * from leave where id =:id")
-    fun getLeaveById(id: String) : Leave
+    fun getLeaveById(id: String) : LiveData<Leave>
 
     @Query("select * from advance")
     fun getAllAdvance() : List<Advance>
@@ -41,7 +42,7 @@ interface AttendanceDao {
     fun getAdvanceByMonth(month: String) : List<Advance>
 
     @Query("select * from advance where id =:id")
-    fun getAdvanceById(id: String) : Advance
+    fun getAdvanceById(id: String) : LiveData<Advance>
 
     @Delete
     suspend fun deleteLeave(leave: Leave)

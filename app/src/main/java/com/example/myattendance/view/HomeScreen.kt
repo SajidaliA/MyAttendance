@@ -83,8 +83,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     navHostController: NavHostController,
-    mainViewModel: MainViewModel,
-    openDrawer: () -> Unit
+    mainViewModel: MainViewModel
 ) {
 
     val c = Calendar.getInstance()
@@ -152,7 +151,7 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.background
+                        color = colorResource(id = R.color.background)
                     )
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState())

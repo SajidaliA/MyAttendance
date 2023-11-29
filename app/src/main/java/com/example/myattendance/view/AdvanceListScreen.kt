@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.myattendance.R
 import com.example.myattendance.database.Advance
+import com.example.myattendance.utils.AppScreens
 import com.example.myattendance.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -64,9 +65,9 @@ fun AdvanceListScreen(
     val c = Calendar.getInstance()
     val yearNum = SimpleDateFormat("yyyy", Locale.ENGLISH)
     val currentYear = yearNum.format(c.time)
-    if (selectedMonth == currentYear){
+    if (selectedMonth == currentYear) {
         mainViewModel.getAllAdvance()
-    }else{
+    } else {
         mainViewModel.getAdvanceByMonth(selectedMonth?.take(3).toString())
     }
 
@@ -77,7 +78,11 @@ fun AdvanceListScreen(
 
     Scaffold(
         content = { padding ->
-            Column(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = colorResource(id = R.color.background))
+            ) {
 
                 Column(
                     modifier = Modifier
@@ -91,7 +96,7 @@ fun AdvanceListScreen(
                             ),
                             shape = RoundedCornerShape(bottomEnd = 30.dp)
                         ),
-                ){
+                ) {
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -121,18 +126,19 @@ fun AdvanceListScreen(
 
                 }
 
-                advancesToDisplay = if (selectedMonth == currentYear){
+                advancesToDisplay = if (selectedMonth == currentYear) {
                     advanceList
-                }else{
+                } else {
                     advanceListByMonth
                 }
                 if (advancesToDisplay.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn(
                         modifier = Modifier.padding(vertical = 4.dp, horizontal = 20.dp),
                         state = lazyListState
                     ) {
                         items(items = advancesToDisplay) { advance ->
-                            AdvanceCard(advance)
+                            AdvanceCard(advance, navHostController)
                         }
                     }
 
@@ -163,24 +169,22 @@ fun AdvanceListScreen(
 
 
 @Composable
-fun AdvanceCard(advance: Advance) {
+fun AdvanceCard(advance: Advance, navHostController: NavHostController) {
     Card(
         modifier = Modifier
             .padding(vertical = 10.dp)
             .fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(30.dp),
         backgroundColor = Color.White,
         elevation = 2.dp
     ) {
         Column(modifier = Modifier
-            .padding(16.dp)
-//            .clickable {
-//                navHostController.navigate(
-//                    AppScreens.AdvanceDetails.routeWithArgs(
-//                        advance.id.toString()
-//                    )
-//                )
-//            }
+            .padding(20.dp)
+            .clickable {
+                navHostController.navigate(
+                    AppScreens.AddEditAdvance.route + "/" + advance.id + "/" + true
+                )
+            }
             .animateContentSize(
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -199,11 +203,20 @@ fun AdvanceCard(advance: Advance) {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
-                    Text(text = "₹${advance.amount}", fontSize = 20.sp, fontWeight = FontWeight.W300)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "₹${advance.amount}",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.W300
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
                     Text(text = advance.details, fontSize = 12.sp, fontWeight = FontWeight.Light)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = advance.date, fontSize = 12.sp, color = Color.Gray, fontWeight = FontWeight.Light)
+                    Text(
+                        text = advance.date,
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Light
+                    )
                 }
             }
         }
