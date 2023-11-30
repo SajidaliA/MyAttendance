@@ -1,5 +1,8 @@
 package com.example.myattendance.view
 
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,27 +52,44 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.util.LocalePreferences.FirstDayOfWeek.Days
 import androidx.navigation.NavHostController
 import com.example.myattendance.R
 import com.example.myattendance.database.Leave
+import com.example.myattendance.utils.ADD_LEAVE
 import com.example.myattendance.utils.CustomTextField
+import com.example.myattendance.utils.DATE_FORMAT
+import com.example.myattendance.utils.EDIT_LEAVE
+import com.example.myattendance.utils.END_DATE
+import com.example.myattendance.utils.FULL_DAY
+import com.example.myattendance.utils.HALF_DAY
+import com.example.myattendance.utils.LEAVE_DATE
+import com.example.myattendance.utils.MULTIPLE_DAYS
+import com.example.myattendance.utils.SINGLE_DAY
+import com.example.myattendance.utils.START_DATE
 import com.example.myattendance.viewmodel.MainViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.datetime.date.datepicker
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Duration
 import java.time.LocalDate
+import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 /**
  * Created by Sajid Ali Suthar.
  */
 
 var date: String = ""
+var startDate: String = ""
+var endDate: String = ""
 var month: String = ""
 var reason: String = ""
 var leaveId: String = ""
+var leaveDayCount: String = ""
 
 
 @Composable
@@ -81,28 +101,49 @@ fun AddEditLeaveScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var validationMessageShown by remember { mutableStateOf(false) }
-    var selectedLeaveType by remember { mutableStateOf("Full Day") }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    val formattedDate by remember {
+    var selectedLeaveType by remember { mutableStateOf(FULL_DAY) }
+    var selectedLeaveDays by remember { mutableStateOf(SINGLE_DAY) }
+    var selectedLeaveDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedStartDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedEndDate by remember { mutableStateOf(LocalDate.now().plusDays(1)) }
+    val formattedLeaveDate by remember {
         derivedStateOf {
-            DateTimeFormatter.ofPattern("dd MMM yyyy").format(selectedDate)
+            DateTimeFormatter.ofPattern(DATE_FORMAT).format(selectedLeaveDate)
         }
     }
-    var dateEdited by remember { mutableStateOf(false) }
+    val formattedStartDate by remember {
+        derivedStateOf {
+            DateTimeFormatter.ofPattern(DATE_FORMAT).format(selectedStartDate)
+        }
+    }
+    val formattedEndDate by remember {
+        derivedStateOf {
+            DateTimeFormatter.ofPattern(DATE_FORMAT).format(selectedEndDate)
+        }
+    }
+    var leaveDateEdited by remember { mutableStateOf(false) }
+    var startDateEdited by remember { mutableStateOf(false) }
+    var endDateEdited by remember { mutableStateOf(false) }
 
     clearAll()
     if (isEdit) {
         leaveId?.let { it ->
             mainViewModel.getLeaveById(it).observeAsState().value?.let {
                 selectedLeaveType = it.leaveType
+                selectedLeaveDays = it.leaveDays
                 date = it.date
+                startDate = it.startDate
+                endDate = it.endDate
                 month = it.month
                 reason = it.reason
+                leaveDayCount = it.leaveDayCount
             }
         }
-    }else{
-        date = formattedDate
-        month = formattedDate.split(" ")[1]
+    } else {
+        date = formattedLeaveDate
+        startDate = formattedStartDate
+        endDate = formattedEndDate
+        month = formattedLeaveDate.split(" ")[1]
     }
     suspend fun showValidationMsg() {
         if (!validationMessageShown) {
@@ -116,7 +157,9 @@ fun AddEditLeaveScreen(
     var isEdited by remember { mutableStateOf(false) }
 
 
-    val dateDialogState = rememberMaterialDialogState()
+    val leaveDateDialogState = rememberMaterialDialogState()
+    val startDateDialogState = rememberMaterialDialogState()
+    val endDateDialogState = rememberMaterialDialogState()
 
     Scaffold(
         content = { padding ->
@@ -163,7 +206,7 @@ fun AddEditLeaveScreen(
 
                             Text(
                                 modifier = Modifier.padding(20.dp),
-                                text = if (isEdit) "Edit Leave" else "Add Leave",
+                                text = if (isEdit) EDIT_LEAVE else ADD_LEAVE,
                                 textAlign = TextAlign.Start,
                                 color = Color.White,
                                 style = MaterialTheme.typography.h5,
@@ -187,11 +230,11 @@ fun AddEditLeaveScreen(
                             .fillMaxWidth(),
                     ) {
                         Text(
-                            text = "Full Day",
+                            text = SINGLE_DAY,
                             modifier = Modifier
                                 .background(
                                     shape = RoundedCornerShape(50.dp),
-                                    color = if (selectedLeaveType == "Full Day") {
+                                    color = if (selectedLeaveDays == SINGLE_DAY) {
                                         colorResource(
                                             id = R.color.gStart
                                         )
@@ -204,12 +247,12 @@ fun AddEditLeaveScreen(
                                 .padding(10.dp)
                                 .weight(1f)
                                 .clickable {
-                                    selectedLeaveType = "Full Day"
+                                    selectedLeaveDays = SINGLE_DAY
                                     isEdited = true
                                 },
                             fontWeight = FontWeight.Light,
                             textAlign = TextAlign.Center,
-                            color = if (selectedLeaveType == "Full Day") {
+                            color = if (selectedLeaveDays == SINGLE_DAY) {
                                 Color.White
                             } else {
                                 colorResource(id = R.color.primaryColor)
@@ -217,11 +260,11 @@ fun AddEditLeaveScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Half Day",
+                            text = MULTIPLE_DAYS,
                             modifier = Modifier
                                 .background(
                                     shape = RoundedCornerShape(50.dp),
-                                    color = if (selectedLeaveType == "Half Day") {
+                                    color = if (selectedLeaveDays == MULTIPLE_DAYS) {
                                         colorResource(
                                             id = R.color.gStart
                                         )
@@ -234,12 +277,12 @@ fun AddEditLeaveScreen(
                                 .padding(10.dp)
                                 .weight(1f)
                                 .clickable {
-                                    selectedLeaveType = "Half Day"
+                                    selectedLeaveDays = MULTIPLE_DAYS
                                     isEdited = true
                                 },
                             fontWeight = FontWeight.Light,
                             textAlign = TextAlign.Center,
-                            color = if (selectedLeaveType == "Half Day") {
+                            color = if (selectedLeaveDays == MULTIPLE_DAYS) {
                                 Color.White
                             } else {
                                 colorResource(id = R.color.primaryColor)
@@ -247,29 +290,155 @@ fun AddEditLeaveScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
-                            .fillMaxWidth()
-                            .height(55.dp)
-                            .border(
-                                BorderStroke(1.dp, Color.Gray),
-                                shape = RoundedCornerShape(50.dp)
-                            )
-                            .clickable {
-                                dateDialogState.show()
-                                isEdited = true
-                            },
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .padding(15.dp),
-                            text = if (isEdit && !dateEdited) "Leave Date: $date" else "Leave Date: $formattedDate",
-                            style = MaterialTheme.typography.caption,
-                            color = Color.DarkGray
-                        )
+
+                    AnimatedVisibility(visible = selectedLeaveDays == SINGLE_DAY) {
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                                    .fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = FULL_DAY,
+                                    modifier = Modifier
+                                        .background(
+                                            shape = RoundedCornerShape(50.dp),
+                                            color = if (selectedLeaveType == FULL_DAY) {
+                                                colorResource(
+                                                    id = R.color.gStart
+                                                )
+                                            } else {
+                                                colorResource(
+                                                    id = R.color.transparent
+                                                )
+                                            }
+                                        )
+                                        .padding(10.dp)
+                                        .weight(1f)
+                                        .clickable {
+                                            selectedLeaveType = FULL_DAY
+                                            isEdited = true
+                                        },
+                                    fontWeight = FontWeight.Light,
+                                    textAlign = TextAlign.Center,
+                                    color = if (selectedLeaveType == FULL_DAY) {
+                                        Color.White
+                                    } else {
+                                        colorResource(id = R.color.primaryColor)
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = HALF_DAY,
+                                    modifier = Modifier
+                                        .background(
+                                            shape = RoundedCornerShape(50.dp),
+                                            color = if (selectedLeaveType == HALF_DAY) {
+                                                colorResource(
+                                                    id = R.color.gStart
+                                                )
+                                            } else {
+                                                colorResource(
+                                                    id = R.color.transparent
+                                                )
+                                            }
+                                        )
+                                        .padding(10.dp)
+                                        .weight(1f)
+                                        .clickable {
+                                            selectedLeaveType = HALF_DAY
+                                            isEdited = true
+                                        },
+                                    fontWeight = FontWeight.Light,
+                                    textAlign = TextAlign.Center,
+                                    color = if (selectedLeaveType == HALF_DAY) {
+                                        Color.White
+                                    } else {
+                                        colorResource(id = R.color.primaryColor)
+                                    }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                                    .fillMaxWidth()
+                                    .height(55.dp)
+                                    .border(
+                                        BorderStroke(1.dp, Color.Gray),
+                                        shape = RoundedCornerShape(50.dp)
+                                    )
+                                    .clickable {
+                                        leaveDateDialogState.show()
+                                        isEdited = true
+                                    },
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    modifier = Modifier
+                                        .padding(15.dp),
+                                    text = if (isEdit && !leaveDateEdited) "$LEAVE_DATE: $date" else "$LEAVE_DATE: $formattedLeaveDate",
+                                    style = MaterialTheme.typography.caption,
+                                    color = Color.DarkGray
+                                )
+                            }
+                        }
+
                     }
+                    AnimatedVisibility(visible = selectedLeaveDays == MULTIPLE_DAYS) {
+                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                                    .fillMaxWidth()
+                                    .height(55.dp)
+                                    .border(
+                                        BorderStroke(1.dp, Color.Gray),
+                                        shape = RoundedCornerShape(50.dp)
+                                    )
+                                    .clickable {
+                                        startDateDialogState.show()
+                                        isEdited = true
+                                    },
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    modifier = Modifier
+                                        .padding(15.dp),
+                                    text = if (isEdit && !startDateEdited) "$START_DATE: $startDate" else "$START_DATE: $formattedStartDate",
+                                    style = MaterialTheme.typography.caption,
+                                    color = Color.DarkGray
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                                    .fillMaxWidth()
+                                    .height(55.dp)
+                                    .border(
+                                        BorderStroke(1.dp, Color.Gray),
+                                        shape = RoundedCornerShape(50.dp)
+                                    )
+                                    .clickable {
+                                        endDateDialogState.show()
+                                        isEdited = true
+                                    },
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    modifier = Modifier
+                                        .padding(15.dp),
+                                    text = if (isEdit && !endDateEdited) "$END_DATE: $endDate" else "$END_DATE: $formattedEndDate",
+                                    style = MaterialTheme.typography.caption,
+                                    color = Color.DarkGray
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+                    }
+
+
 
 
                     CustomTextField(
@@ -295,12 +464,26 @@ fun AddEditLeaveScreen(
                         colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.gStart)),
                         onClick = {
                             if (isEdited) {
+                                if (selectedLeaveDays == SINGLE_DAY){
+                                    startDate = ""
+                                    endDate = ""
+                                    leaveDayCount = if (selectedLeaveType == FULL_DAY) "1" else "0.5"
+                                }else{
+                                    selectedLeaveType = ""
+                                    date = ""
+                                    month = formattedStartDate.split(" ")[1]
+                                    leaveDayCount = ChronoUnit.DAYS.between(selectedStartDate, selectedEndDate.plusDays(1)).toString()
+                                }
                                 if (isEdit) {
                                     updateLeaveInDB(
                                         Leave(
                                             leaveId?.toInt(),
+                                            selectedLeaveDays,
                                             selectedLeaveType,
+                                            startDate,
+                                            endDate,
                                             date,
+                                            leaveDayCount,
                                             month,
                                             reason
                                         ), mainViewModel
@@ -308,11 +491,15 @@ fun AddEditLeaveScreen(
                                 } else {
                                     addLeaveInDB(
                                         Leave(
-                                            id = null,
-                                            leaveType = selectedLeaveType,
-                                            date = date,
-                                            month = month,
-                                            reason = reason
+                                            null,
+                                            selectedLeaveDays,
+                                            selectedLeaveType,
+                                            startDate,
+                                            endDate,
+                                            date,
+                                            leaveDayCount,
+                                            month,
+                                            reason
                                         ), mainViewModel
                                     )
                                 }
@@ -342,17 +529,64 @@ fun AddEditLeaveScreen(
                     }
 
                 }
-                MaterialDialog(dialogState = dateDialogState,
+                MaterialDialog(dialogState = leaveDateDialogState,
                     buttons = {
                         positiveButton(text = "Ok")
                         negativeButton(text = "Cancel")
                     }) {
                     datepicker(
-                        initialDate = if (isEdit && !dateEdited) LocalDate.parse(date, DateTimeFormatter.ofPattern("dd MMM yyyy")) else selectedDate,
+                        initialDate = if (isEdit && !leaveDateEdited) LocalDate.parse(
+                            date,
+                            DateTimeFormatter.ofPattern("dd MMM yyyy")
+                        ) else selectedLeaveDate,
                         title = "Select leave date",
                     ) {
-                        dateEdited = true
-                        selectedDate = it
+                        leaveDateEdited = true
+                        selectedLeaveDate = it
+                    }
+                }
+                val context = LocalContext.current
+                MaterialDialog(dialogState = startDateDialogState,
+                    buttons = {
+                        positiveButton(text = "Ok")
+                        negativeButton(text = "Cancel")
+                    }) {
+                    datepicker(
+                        initialDate = if (isEdit && !startDateEdited) LocalDate.parse(
+                            startDate,
+                            DateTimeFormatter.ofPattern("dd MMM yyyy")
+                        ) else selectedStartDate,
+                        title = "Select start date",
+                    ) {
+                        startDateEdited = true
+                        selectedStartDate = it
+                        selectedEndDate = selectedStartDate.plusDays(1)
+                    }
+                }
+                MaterialDialog(dialogState = endDateDialogState,
+                    buttons = {
+                        positiveButton(text = "Ok")
+                        negativeButton(text = "Cancel")
+                    }) {
+                    datepicker(
+                        initialDate = if (isEdit && !endDateEdited) LocalDate.parse(
+                            endDate,
+                            DateTimeFormatter.ofPattern("dd MMM yyyy")
+                        ) else selectedEndDate,
+
+                        title = "Select end date",
+                    ) {
+
+                        if (selectedEndDate <= selectedStartDate) {
+                            Toast.makeText(
+                                context,
+                                "End date should be garter then start date",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            endDateEdited = true
+                            selectedEndDate = it
+                        }
                     }
                 }
 

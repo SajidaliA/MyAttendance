@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Scaffold
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -226,7 +225,7 @@ fun AdvanceCard(
 
                 }
                 Spacer(modifier = Modifier.width(10.dp))
-                Image(painter = painterResource(id = R.drawable.bin),
+                Image(painter = painterResource(id = R.drawable.ic_delete),
                     contentDescription = "Delete",
                     colorFilter = ColorFilter.tint(
                         colorResource(id = R.color.gStart)

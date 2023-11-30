@@ -7,9 +7,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,20 +24,31 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.DismissValue
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SwipeToDismiss
+import androidx.compose.material.rememberDismissState
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +59,8 @@ import androidx.navigation.NavHostController
 import com.example.myattendance.R
 import com.example.myattendance.database.Leave
 import com.example.myattendance.utils.AppScreens
+import com.example.myattendance.utils.SINGLE_DAY
+import com.example.myattendance.utils.montserratFontFamily
 import com.example.myattendance.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -54,6 +70,7 @@ import java.util.Locale
  * Created by Sajid Ali Suthar.
  */
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun LeaveListScreen(
     navHostController: NavHostController,
@@ -78,7 +95,9 @@ fun LeaveListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = colorResource(id = R.color.background))
+                    .background(
+                        color = colorResource(id = R.color.background)
+                    )
             ) {
 
                 Column(
@@ -122,18 +141,75 @@ fun LeaveListScreen(
                     }
 
                 }
+
                 if ((selectedMonth == currentYear && leaves.isNotEmpty()) || leavesByMonth.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn(
-                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 20.dp),
-                        state = lazyListState
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(20.dp),
+                        state = lazyListState,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        items(items = if (selectedMonth == currentYear) {
-                            leaves
-                        } else {
-                            leavesByMonth
-                        }) { leave ->
-                            LeaveCard(leave, navHostController, mainViewModel, selectedMonth)
+                        items(
+                            items = if (selectedMonth == currentYear) {
+                                leaves
+                            } else {
+                                leavesByMonth
+                            }
+                        ) { leave ->
+                            val dismissState = rememberDismissState(
+                                confirmStateChange = { value ->
+                                    if (value == DismissValue.DismissedToStart) {
+                                        //TODO :: Add confirmation dialog for delete leave
+                                        mainViewModel.deleteLeave(leave, selectedMonth?.take(3))
+
+                                    }
+                                    if (value == DismissValue.DismissedToEnd) {
+                                        navHostController.navigate(AppScreens.AddEditLeave.route + "/" + leave.id + "/" + true)
+
+                                    }
+                                    true
+                                }
+                            )
+                            SwipeToDismiss(state = dismissState, background = {
+                                val color = when (dismissState.dismissDirection) {
+                                    DismissDirection.EndToStart -> Color.Red
+                                    DismissDirection.StartToEnd -> Color.LightGray
+                                    else -> Color.Transparent
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .background(
+                                            shape = RoundedCornerShape(20.dp),
+                                            color = color
+                                        )
+                                        .fillMaxSize()
+                                        .padding(vertical = 15.dp, horizontal = 15.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_delete),
+                                        contentDescription = "Delete",
+                                        modifier = Modifier
+                                            .align(
+                                                Alignment.CenterEnd
+                                            )
+                                            .size(35.dp)
+                                    )
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_edit),
+                                        contentDescription = "Edit",
+                                        modifier = Modifier
+                                            .align(
+                                                Alignment.CenterStart
+                                            )
+                                            .size(25.dp)
+                                    )
+                                }
+                            }, dismissContent = {
+                                LeaveCard(leave, navHostController, mainViewModel, selectedMonth)
+                            })
+
                         }
                     }
 
@@ -155,6 +231,8 @@ fun LeaveListScreen(
                         )
                     }
                 }
+
+
             }
 
         }
@@ -172,18 +250,21 @@ fun LeaveCard(
 ) {
     Card(
         modifier = Modifier
-            .padding(vertical = 10.dp)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        backgroundColor = Color.White,
-        elevation = 2.dp
+            .fillMaxWidth()
+            .shadow(
+                10.dp,
+                RoundedCornerShape(20.dp),
+                spotColor = colorResource(id = R.color.gStart)
+            )
+            .clickable {
+                navHostController.navigate(AppScreens.AddEditLeave.route + "/" + leave.id + "/" + true)
+            },
+        elevation = 3.dp,
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
             modifier = Modifier
                 .padding(20.dp)
-                .clickable {
-                    navHostController.navigate(AppScreens.AddEditLeave.route + "/" + leave.id + "/" + true)
-                }
                 .animateContentSize(
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -192,44 +273,105 @@ fun LeaveCard(
                 )
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.leave_icon),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
-                        .size(65.dp)
-                        .clip(RoundedCornerShape(50.dp))
-                )
-                Spacer(modifier = Modifier.width(20.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = leave.leaveType,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.W400,
-                        color = Color.Black.copy(0.5f)
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = leave.date, fontSize = 20.sp, fontWeight = FontWeight.W300)
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Text(
-                        text = leave.reason,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.W400,
-                        color = Color.Black.copy(0.6f)
+                        .size(50.dp)
+                        .background(
+                            shape = CircleShape, color = colorResource(
+                                id = R.color.gStart
+                            ).copy(0.1f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        modifier = Modifier.size(25.dp),
+                        painter = painterResource(id = R.drawable.ic_calender),
+                        contentDescription = null,
                     )
                 }
                 Spacer(modifier = Modifier.width(10.dp))
-                Image(painter = painterResource(id = R.drawable.bin),
-                    contentDescription = "Delete",
-                    colorFilter = ColorFilter.tint(
-                        colorResource(id = R.color.gStart)
-                    ),
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clickable {
-                            mainViewModel.deleteLeave(leave, selectedMonth)
-                        })
+                Column(modifier = Modifier.padding(10.dp)) {
+                    if (leave.leaveDays == SINGLE_DAY) {
+
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column {
+                                LeaveDescription(s = "Date", true)
+                                Spacer(modifier = Modifier.height(3.dp))
+                                LeaveDate(leave.date)
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            VerticalDivider()
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                LeaveDescription(s = "Type", true)
+                                Spacer(modifier = Modifier.height(3.dp))
+                                LeaveDate(leave.leaveType)
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                LeaveDescription(s = "From", true)
+                                Spacer(modifier = Modifier.height(3.dp))
+                                LeaveDate(leave.startDate)
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            VerticalDivider()
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                LeaveDescription(s = "To", true)
+                                Spacer(modifier = Modifier.height(3.dp))
+                                LeaveDate(leave.endDate)
+                            }
+                        }
+
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LeaveDescription("Details:", true)
+                    Spacer(modifier = Modifier.height(3.dp))
+                    LeaveDescription(leave.reason)
+                }
             }
         }
     }
+}
+
+@Composable
+fun VerticalDivider() {
+    Divider(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(30.dp)
+            .rotate(90f), color = Color.LightGray
+    )
+}
+
+@Composable
+private fun LeaveDescription(s: String, light: Boolean = false) {
+    Text(
+        text = s,
+        fontSize = 10.sp,
+        fontFamily = montserratFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        color = Color.Black.copy(if (light) 0.3f else 0.6f),
+        lineHeight = 15.sp,
+        maxLines = 1,
+    )
+}
+
+@Composable
+fun LeaveDate(startDate: String) {
+    Text(
+        text = startDate,
+        fontSize = 14.sp,
+        fontFamily = montserratFontFamily,
+        fontWeight = FontWeight.SemiBold
+    )
 }
