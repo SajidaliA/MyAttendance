@@ -36,10 +36,8 @@ class MainViewModel @Inject constructor(private val mainRepository: MainReposito
         getAllLeaves()
     }
 
-    fun deleteLeave(leave: Leave, month: String?) {
+    fun deleteLeave(leave: Leave) {
         mainRepository.deleteLeave(leave)
-        getAllLeaves()
-        getLeaveByMonth(month = month)
     }
 
     fun getAllLeaves() {

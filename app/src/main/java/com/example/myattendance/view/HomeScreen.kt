@@ -30,8 +30,6 @@ import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Scaffold
 import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.Divider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -69,6 +68,7 @@ import com.example.myattendance.utils.TYPE_MONTH
 import com.example.myattendance.utils.TYPE_YEAR
 import com.example.myattendance.utils.TYPE_YEAR_WITH_BONUS
 import com.example.myattendance.utils.USER_NAME
+import com.example.myattendance.utils.montserratFontFamily
 import com.example.myattendance.viewmodel.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -101,8 +101,8 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
     val modalSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
-        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
-        skipHalfExpanded = true
+        confirmValueChange = { it != ModalBottomSheetValue.HalfExpanded },
+        skipHalfExpanded = false
     )
     var dailySalary = 0f
     var monthlySalary = 0f
@@ -203,8 +203,8 @@ fun HomeScreen(
                     Text(
                         modifier = Modifier.padding(horizontal = 20.dp),
                         text = "Hello! ${user?.name ?: USER_NAME}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.W300,
+                        fontFamily = montserratFontFamily,
+                        fontWeight = FontWeight.Normal,
                         textAlign = TextAlign.Start,
                         color = Color.White.copy(0.8f)
                     )
@@ -257,7 +257,9 @@ fun HomeScreen(
                         },
                         textAlign = TextAlign.Start,
                         color = Color.White,
-                        style = MaterialTheme.typography.displayLarge
+                        fontSize = 30.sp,
+                        fontFamily = montserratFontFamily,
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         modifier = Modifier.padding(
@@ -265,8 +267,8 @@ fun HomeScreen(
                             end = 20.dp,
                             bottom = 20.dp
                         ),
-                        text = "$selectedMonth",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = selectedMonth,
+                        fontFamily = montserratFontFamily,
                         fontWeight = FontWeight.Light,
                         fontSize = 16.sp,
                         textAlign = TextAlign.Start,
@@ -285,6 +287,7 @@ fun HomeScreen(
                 ) {
                     items(items = months) { monthItem ->
                         Text(
+                            fontFamily = montserratFontFamily,
                             fontWeight = FontWeight.Light,
                             text = monthItem,
                             modifier = Modifier
@@ -422,9 +425,13 @@ private fun CardItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(
+                10.dp,
+                RoundedCornerShape(20.dp),
+                spotColor = colorResource(id = R.color.gStart)
+            )
             .height(100.dp),
         shape = RoundedCornerShape(20.dp),
-        elevation = 3.dp
     ) {
         Column(
             modifier = Modifier
@@ -457,18 +464,18 @@ private fun CardItem(
                         ""
                     }
                 },
-                fontWeight = FontWeight.W300,
-                fontSize = 12.sp,
-                style = MaterialTheme.typography.bodySmall,
+                fontFamily = montserratFontFamily,
+                fontWeight = FontWeight.Normal,
+                fontSize = 11.sp,
                 color = colorResource(id = R.color.gEnd).copy(0.6f)
             )
             val finalAmountWithComma = "%,d".format(amount?.toInt())
             Text(
                 modifier = Modifier.padding(start = 20.dp, top = 2.dp, bottom = 20.dp),
                 text = "₹${finalAmountWithComma}/-",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.W400,
-                fontSize = 20.sp,
+                fontFamily = montserratFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp,
                 color = if (type == TYPE_LEAVE || type == TYPE_ADVANCE) {
                     Color.Red
                 } else if (type == TYPE_BONUS) {
@@ -492,8 +499,8 @@ fun BottomSheetLayout(
 ) {
 
 
-    var isSheetFullscreen by remember { mutableStateOf(false) }
-    val roundedCornerRadius = if (isSheetFullscreen) 0.dp else 12.dp
+    val isSheetFullscreen by remember { mutableStateOf(false) }
+    val roundedCornerRadius = if (isSheetFullscreen) 0.dp else 20.dp
     val modifier = if (isSheetFullscreen) Modifier.fillMaxSize() else Modifier.fillMaxWidth()
 
     BackHandler(modalSheetState.isVisible) {
@@ -508,23 +515,23 @@ fun BottomSheetLayout(
         ),
         sheetContent = {
             Column(
-                modifier = modifier,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Center
             ) {
                 BottomSheetRow(
-                    painterResource(id = R.drawable.leave_icon),
+                    painterResource(id = R.drawable.ic_calender),
                     NAVIGATE_LEAVE,
                     navHostController,
                     modalSheetState,
                     coroutineScope
                 )
                 BottomSheetRow(
-                    painterResource(id = R.drawable.advance_icon),
+                    painterResource(id = R.drawable.ic_money),
                     NAVIGATE_ADVANCE, navHostController,
                     modalSheetState,
                     coroutineScope
                 )
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     ) {
@@ -541,37 +548,48 @@ fun BottomSheetRow(
     modalSheetState: ModalBottomSheetState,
     coroutineScope: CoroutineScope
 ) {
-    Column(modifier = Modifier
-        .background(color = colorResource(id = R.color.gStart))
-        .clickable {
-            when (navigateType) {
-                NAVIGATE_LEAVE -> {
-                    navHostController.navigate(AppScreens.AddEditLeave.route + "/" + "0" + "/" + false)
-                }
 
-                NAVIGATE_ADVANCE -> {
-                    navHostController.navigate(AppScreens.AddEditAdvance.route + "/" + "0" + "/" + false)
-                }
-            }
-            coroutineScope.launch {
-                modalSheetState.hide()
-            }
-        }) {
+    Card(
+        modifier = Modifier
+            .padding(start = 30.dp, end = 30.dp, top = 30.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(25),
+        elevation = 0.dp
+    ) {
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .clickable {
+                    when (navigateType) {
+                        NAVIGATE_LEAVE -> {
+                            navHostController.navigate(AppScreens.AddEditLeave.route + "/" + "0" + "/" + false)
+                        }
+
+                        NAVIGATE_ADVANCE -> {
+                            navHostController.navigate(AppScreens.AddEditAdvance.route + "/" + "0" + "/" + false)
+                        }
+                    }
+                    coroutineScope.launch {
+                        modalSheetState.hide()
+                    }
+                }
+                .background(color = colorResource(id = R.color.gStart).copy(0.1f)),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Image(painter, contentDescription = null, modifier = Modifier.size(50.dp))
+            Image(
+                painter,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(80.dp)
+                    .padding(vertical = 20.dp)
+            )
             Text(
-                text = navigateType, modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 20.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Light,
-                color = Color.White
+                text = navigateType,
+                fontFamily = montserratFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
             )
         }
-        Divider(color = Color.LightGray, thickness = 1.dp)
     }
+
+
 }

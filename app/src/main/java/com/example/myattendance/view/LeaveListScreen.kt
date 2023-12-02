@@ -33,10 +33,15 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SwipeToDismiss
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.rememberDismissState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +95,10 @@ fun LeaveListScreen(
     val leaves: List<Leave> by mainViewModel.allLeaves.observeAsState(initial = listOf())
     val lazyListState = rememberLazyListState()
 
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+    var deleteCanceled by remember { mutableStateOf(false) }
+    var leaveToDelete by remember { mutableStateOf(Leave()) }
+
     Scaffold(
         content = { padding ->
             Column(
@@ -135,8 +144,9 @@ fun LeaveListScreen(
                             text = "$selectedMonth Leaves",
                             textAlign = TextAlign.Start,
                             color = Color.White,
-                            style = androidx.compose.material.MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.Light
+                            fontSize = 20.sp,
+                            fontFamily = montserratFontFamily,
+                            fontWeight = FontWeight.Normal,
                         )
                     }
 
@@ -145,10 +155,10 @@ fun LeaveListScreen(
                 if ((selectedMonth == currentYear && leaves.isNotEmpty()) || leavesByMonth.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(20.dp),
+                            .fillMaxHeight(),
                         state = lazyListState,
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        contentPadding = PaddingValues(20.dp)
                     ) {
                         items(
                             items = if (selectedMonth == currentYear) {
@@ -160,21 +170,27 @@ fun LeaveListScreen(
                             val dismissState = rememberDismissState(
                                 confirmStateChange = { value ->
                                     if (value == DismissValue.DismissedToStart) {
-                                        //TODO :: Add confirmation dialog for delete leave
-                                        mainViewModel.deleteLeave(leave, selectedMonth?.take(3))
+                                        leaveToDelete = leave
+                                        deleteCanceled = false
+                                        showDeleteConfirmationDialog = true
 
                                     }
                                     if (value == DismissValue.DismissedToEnd) {
                                         navHostController.navigate(AppScreens.AddEditLeave.route + "/" + leave.id + "/" + true)
-
                                     }
                                     true
                                 }
                             )
+                            if (dismissState.currentValue != DismissValue.Default && (deleteCanceled || dismissState.dismissDirection == DismissDirection.StartToEnd)) {
+                                LaunchedEffect(Unit) {
+                                    dismissState.reset()
+                                }
+                            }
+
                             SwipeToDismiss(state = dismissState, background = {
                                 val color = when (dismissState.dismissDirection) {
                                     DismissDirection.EndToStart -> Color.Red
-                                    DismissDirection.StartToEnd -> Color.LightGray
+                                    DismissDirection.StartToEnd -> colorResource(id = R.color.gStart)
                                     else -> Color.Transparent
                                 }
 
@@ -187,27 +203,23 @@ fun LeaveListScreen(
                                         .fillMaxSize()
                                         .padding(vertical = 15.dp, horizontal = 15.dp)
                                 ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_delete),
-                                        contentDescription = "Delete",
-                                        modifier = Modifier
+                                    if (dismissState.dismissDirection == DismissDirection.EndToStart){
+                                        SwipeIcon( modifier = Modifier
                                             .align(
                                                 Alignment.CenterEnd
                                             )
-                                            .size(35.dp)
-                                    )
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_edit),
-                                        contentDescription = "Edit",
-                                        modifier = Modifier
+                                            .size(35.dp), R.drawable.ic_delete, "Delete")
+                                    }
+                                    if (dismissState.dismissDirection == DismissDirection.StartToEnd){
+                                        SwipeIcon( modifier = Modifier
                                             .align(
                                                 Alignment.CenterStart
                                             )
-                                            .size(25.dp)
-                                    )
+                                            .size(30.dp), R.drawable.ic_edit, "Edit")
+                                    }
                                 }
                             }, dismissContent = {
-                                LeaveCard(leave, navHostController, mainViewModel, selectedMonth)
+                                LeaveCard(leave, navHostController)
                             })
 
                         }
@@ -224,10 +236,13 @@ fun LeaveListScreen(
                         Text(
                             text = "No any leave added.",
                             fontSize = 20.sp,
+                            fontFamily = montserratFontFamily,
+                            fontWeight = FontWeight.Normal,
                             modifier = Modifier
                                 .wrapContentWidth()
                                 .wrapContentHeight(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
                         )
                     }
                 }
@@ -238,21 +253,83 @@ fun LeaveListScreen(
         }
     )
 
+    if (showDeleteConfirmationDialog) {
+        var updateData by remember { mutableStateOf(false) }
+        ConfirmationDialog(
+            "Delete confirm!",
+            "Are you sure you want to delete this leave?",
+            onConfirmation = {
+                mainViewModel.deleteLeave(leaveToDelete)
+                updateData = true
+                showDeleteConfirmationDialog = false
+            }, onDismissRequest = {
+                deleteCanceled = true
+                showDeleteConfirmationDialog = false
+            })
+
+        LaunchedEffect(updateData) {
+            if (selectedMonth == currentYear) {
+                mainViewModel.getAllLeaves()
+            } else {
+                mainViewModel.getLeaveByMonth(selectedMonth?.take(3).toString())
+            }
+        }
+    }
+
+}
+
+@Composable
+fun SwipeIcon(modifier: Modifier, icon: Int, text: String) {
+    Icon(
+        painter = painterResource(icon),
+        contentDescription = text,
+        modifier = modifier,
+        tint = colorResource(id = R.color.white)
+    )
+}
+
+@Composable
+fun ConfirmationDialog(
+    title: String,
+    text: String,
+    onConfirmation: () -> Unit,
+    onDismissRequest: () -> Unit
+) {
+
+
+    AlertDialog(
+        icon = { Icon(imageVector = Icons.Default.Warning, contentDescription = null) },
+        title = { Text(text = title) },
+        text = { Text(text = text) },
+        onDismissRequest = { },
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirmation()
+            }) {
+                Text(text = "Yes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = {
+                onDismissRequest()
+            }) {
+                Text(text = "Cancel")
+            }
+        })
+
 }
 
 
 @Composable
 fun LeaveCard(
     leave: Leave,
-    navHostController: NavHostController,
-    mainViewModel: MainViewModel,
-    selectedMonth: String?
+    navHostController: NavHostController
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
-                10.dp,
+                20.dp,
                 RoundedCornerShape(20.dp),
                 spotColor = colorResource(id = R.color.gStart)
             )

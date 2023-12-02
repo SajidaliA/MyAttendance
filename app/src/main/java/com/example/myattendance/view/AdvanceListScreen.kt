@@ -45,6 +45,7 @@ import androidx.navigation.NavHostController
 import com.example.myattendance.R
 import com.example.myattendance.database.Advance
 import com.example.myattendance.utils.AppScreens
+import com.example.myattendance.utils.montserratFontFamily
 import com.example.myattendance.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -117,8 +118,9 @@ fun AdvanceListScreen(
                             text = "$selectedMonth Advance",
                             textAlign = TextAlign.Start,
                             color = Color.White,
-                            style = androidx.compose.material.MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.Light
+                            fontSize = 20.sp,
+                            fontFamily = montserratFontFamily,
+                            fontWeight = FontWeight.Normal,
                         )
                     }
 
@@ -153,10 +155,13 @@ fun AdvanceListScreen(
                         Text(
                             text = "No any Advance taken.",
                             fontSize = 20.sp,
+                            fontFamily = montserratFontFamily,
+                            fontWeight = FontWeight.Normal,
                             modifier = Modifier
                                 .wrapContentWidth()
                                 .wrapContentHeight(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
                         )
                     }
                 }
@@ -199,7 +204,7 @@ fun AdvanceCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(id = R.drawable.advance_icon),
+                    painter = painterResource(id = R.drawable.ic_money),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
