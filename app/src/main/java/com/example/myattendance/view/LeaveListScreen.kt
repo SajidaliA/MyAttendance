@@ -376,17 +376,17 @@ fun LeaveCard(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column {
-                                LeaveDescription(s = "Date", true)
+                                DescriptionText(text = "Date", true)
                                 Spacer(modifier = Modifier.height(3.dp))
-                                LeaveDate(leave.date)
+                                MainText(leave.date)
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             VerticalDivider()
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                LeaveDescription(s = "Type", true)
+                                DescriptionText(text = "Type", true)
                                 Spacer(modifier = Modifier.height(3.dp))
-                                LeaveDate(leave.leaveType)
+                                MainText(leave.leaveType)
                             }
                         }
                     } else {
@@ -395,25 +395,25 @@ fun LeaveCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                LeaveDescription(s = "From", true)
+                                DescriptionText(text = "From", true)
                                 Spacer(modifier = Modifier.height(3.dp))
-                                LeaveDate(leave.startDate)
+                                MainText(leave.startDate)
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             VerticalDivider()
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                LeaveDescription(s = "To", true)
+                                DescriptionText(text = "To", true)
                                 Spacer(modifier = Modifier.height(3.dp))
-                                LeaveDate(leave.endDate)
+                                MainText(leave.endDate)
                             }
                         }
 
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    LeaveDescription("Details:", true)
+                    DescriptionText("Details:", true)
                     Spacer(modifier = Modifier.height(3.dp))
-                    LeaveDescription(leave.reason)
+                    DescriptionText(leave.reason)
                 }
             }
         }
@@ -431,22 +431,21 @@ fun VerticalDivider() {
 }
 
 @Composable
-private fun LeaveDescription(s: String, light: Boolean = false) {
+fun DescriptionText(text: String, light: Boolean = false) {
     Text(
-        text = s,
+        text = text,
         fontSize = 10.sp,
         fontFamily = montserratFontFamily,
         fontWeight = FontWeight.SemiBold,
         color = Color.Black.copy(if (light) 0.3f else 0.6f),
-        lineHeight = 15.sp,
         maxLines = 1,
     )
 }
 
 @Composable
-fun LeaveDate(startDate: String) {
+fun MainText(text: String) {
     Text(
-        text = startDate,
+        text = text,
         fontSize = 14.sp,
         fontFamily = montserratFontFamily,
         fontWeight = FontWeight.SemiBold

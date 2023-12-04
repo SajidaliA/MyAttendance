@@ -7,9 +7,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +24,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Scaffold
@@ -30,11 +34,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -130,8 +133,10 @@ fun AdvanceListScreen(
                 if ((selectedMonth == currentYear) && advanceList.isNotEmpty() || advanceListByMonth.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     LazyColumn(
-                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 20.dp),
-                        state = lazyListState
+                        modifier = Modifier.fillMaxHeight(),
+                        state = lazyListState,
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        contentPadding = PaddingValues(20.dp)
                     ) {
                         items(
                             items = if (selectedMonth == currentYear) {
@@ -140,7 +145,7 @@ fun AdvanceListScreen(
                                 advanceListByMonth
                             }
                         ) { advance ->
-                            AdvanceCard(advance, navHostController, mainViewModel, selectedMonth)
+                            AdvanceCard(advance, navHostController)
                         }
                     }
 
@@ -176,70 +181,66 @@ fun AdvanceListScreen(
 @Composable
 fun AdvanceCard(
     advance: Advance,
-    navHostController: NavHostController,
-    mainViewModel: MainViewModel,
-    selectedMonth: String?
+    navHostController: NavHostController
 ) {
     Card(
         modifier = Modifier
-            .padding(vertical = 10.dp)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        backgroundColor = Color.White,
-        elevation = 2.dp
-    ) {
-        Column(modifier = Modifier
-            .padding(20.dp)
+            .shadow(
+                20.dp,
+                RoundedCornerShape(20.dp),
+                spotColor = colorResource(id = R.color.gStart)
+            )
+            .fillMaxWidth()
             .clickable {
                 navHostController.navigate(
                     AppScreens.AddEditAdvance.route + "/" + advance.id + "/" + true
                 )
-            }
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
+            },
+        shape = RoundedCornerShape(20.dp),
+        elevation = 3.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 )
-            )
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_money),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
-                        .size(65.dp)
-                        .clip(RoundedCornerShape(50.dp))
-                )
+                        .size(50.dp)
+                        .background(
+                            shape = CircleShape, color = colorResource(
+                                id = R.color.gStart
+                            ).copy(0.1f)
+                        ), contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_money),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(25.dp)
+
+                    )
+                }
+
                 Spacer(modifier = Modifier.width(20.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "₹${advance.amount}",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.W300
-                    )
+                    DescriptionText(text = "Amount:", true)
                     Spacer(modifier = Modifier.height(5.dp))
-                    Text(text = advance.details, fontSize = 12.sp, fontWeight = FontWeight.Light)
+                    MainText(text = "₹${advance.amount}")
+                    Spacer(modifier = Modifier.height(10.dp))
+                    DescriptionText(text = "Details:", true)
+                    Spacer(modifier = Modifier.height(5.dp))
+                    DescriptionText(text = advance.details)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = advance.date,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Light
-                    )
-
+                    DescriptionText(text = advance.date, true)
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-                Image(painter = painterResource(id = R.drawable.ic_delete),
-                    contentDescription = "Delete",
-                    colorFilter = ColorFilter.tint(
-                        colorResource(id = R.color.gStart)
-                    ),
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clickable {
-                            mainViewModel.deleteAdvance(advance, selectedMonth)
-                        })
             }
         }
     }
