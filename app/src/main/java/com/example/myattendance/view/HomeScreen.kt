@@ -38,6 +38,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,10 +91,11 @@ fun HomeScreen(
     val monthNum = SimpleDateFormat("MMMM", Locale.ENGLISH)
     val yearNum = SimpleDateFormat("yyyy", Locale.ENGLISH)
     val currentMonth = monthNum.format(c.time)
+    var selectedMonth by rememberSaveable { mutableStateOf(currentMonth) }
     val currentYear = yearNum.format(c.time)
 
     mainViewModel.getUser()
-    mainViewModel.getLeaveByMonth(monthNum.format(c.time).take(3))
+    mainViewModel.getLeaveByMonth(selectedMonth.take(3))
     mainViewModel.getAllLeaves()
     mainViewModel.getAllAdvance()
 
@@ -156,9 +158,16 @@ fun HomeScreen(
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState())
             ) {
-                var selectedMonth by remember { mutableStateOf(currentMonth) }
-                val currentMonthLeaves = leaveByMonth.size
-                val yearlyLeaves = leaves.size
+
+                var currentMonthLeaves = 0f
+                for(leave in leaveByMonth){
+                    currentMonthLeaves += leave.leaveDayCount.toFloat()
+                }
+
+                var yearlyLeaves = 0f
+                for(leave in leaves){
+                    yearlyLeaves += leave.leaveDayCount.toFloat()
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -373,19 +382,19 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(20.dp))
                         CardItem(
-                            TYPE_LEAVE,
-                            if (selectedMonth == currentYear) {
+                            type = TYPE_LEAVE,
+                            amount = if (selectedMonth == currentYear) {
                                 totalYearLeaveAmount
                             } else {
                                 totalMonthLeaveAmount
                             },
-                            if (selectedMonth == currentYear) {
+                            currentMonthLeaves = if (selectedMonth == currentYear) {
                                 yearlyLeaves
                             } else {
                                 currentMonthLeaves
                             },
-                            selectedMonth,
-                            navHostController
+                            selectedMonth = selectedMonth,
+                            navHostController = navHostController
                         )
                     }
                 }
@@ -418,7 +427,7 @@ fun HomeScreen(
 private fun CardItem(
     type: String,
     amount: Float?,
-    currentMonthLeaves: Int = 0,
+    currentMonthLeaves: Float = 0f,
     selectedMonth: String = "",
     navHostController: NavHostController
 ) {
