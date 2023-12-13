@@ -73,10 +73,10 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     //Room
-    implementation("androidx.room:room-runtime:2.6.0")
-    ksp("androidx.room:room-compiler:2.6.0")
-    implementation("androidx.room:room-ktx:2.6.0")
-    implementation("androidx.room:room-paging:2.6.0")
+    implementation("androidx.room:room-runtime:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-paging:2.6.1")
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
 
     //Hilt
@@ -89,5 +89,8 @@ dependencies {
 
     //DatePicker
     implementation("io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.6")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    //Splash screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }

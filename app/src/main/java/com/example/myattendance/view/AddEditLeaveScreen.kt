@@ -1,6 +1,5 @@
 package com.example.myattendance.view
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -52,7 +51,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.text.util.LocalePreferences.FirstDayOfWeek.Days
 import androidx.navigation.NavHostController
 import com.example.myattendance.R
 import com.example.myattendance.database.Leave
@@ -73,9 +71,7 @@ import com.vanpra.composematerialdialogs.datetime.date.datepicker
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.Duration
 import java.time.LocalDate
-import java.time.Period
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -144,6 +140,18 @@ fun AddEditLeaveScreen(
         startDate = formattedStartDate
         endDate = formattedEndDate
         month = formattedLeaveDate.split(" ")[1]
+    }
+    if (leaveDateEdited){
+        date = formattedLeaveDate
+        month = formattedLeaveDate.split(" ")[1]
+    }
+    if(startDateEdited){
+        startDate = formattedStartDate
+        month = formattedStartDate.split(" ")[1]
+    }
+    if (endDateEdited){
+        endDate = formattedEndDate
+        month = formattedEndDate.split(" ")[1]
     }
     suspend fun showValidationMsg() {
         if (!validationMessageShown) {

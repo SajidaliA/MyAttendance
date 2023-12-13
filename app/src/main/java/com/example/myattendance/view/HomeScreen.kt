@@ -42,7 +42,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -133,8 +132,10 @@ fun HomeScreen(
             val user = mainViewModel.user.observeAsState().value
             user?.let {
                 if (user.dailySalary.isNotEmpty()) {
+                    val calendar = Calendar.getInstance()
+                    calendar.set(Calendar.MONTH, getCountOfSelectedMonth(selectedMonth))
                     dailySalary = user.dailySalary.toFloat()
-                    monthlySalary = user.dailySalary.toFloat().times(30)
+                    monthlySalary = user.dailySalary.toFloat().times(calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
                     yearlySalary = user.dailySalary.toFloat().times(365)
                     bonus = user.yearlyBonus.toFloat()
                     yearlySalaryWithBonus = user.dailySalary.toFloat().times(365) + bonus
@@ -188,14 +189,10 @@ fun HomeScreen(
                     ) {
                         Image(
                             modifier = Modifier
-                                .rotate(180f)
-                                .size(70.dp)
+                                .size(80.dp)
                                 .padding(horizontal = 20.dp),
-                            painter = painterResource(id = R.drawable.ic_drawer),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(
-                                Color.White
-                            )
+                            painter = painterResource(id = R.drawable.ic_calender),
+                            contentDescription = null
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Image(modifier = Modifier
@@ -601,4 +598,23 @@ fun BottomSheetRow(
     }
 
 
+}
+
+fun getCountOfSelectedMonth(selectedMonth: String): Int{
+    var monthCount = 0
+    when (selectedMonth){
+        "January" -> monthCount = 0
+        "February" -> monthCount = 1
+        "March" -> monthCount = 2
+        "April" -> monthCount = 3
+        "May" -> monthCount = 4
+        "June" -> monthCount = 5
+        "July" -> monthCount = 6
+        "August" -> monthCount = 7
+        "September" -> monthCount = 8
+        "October" -> monthCount = 9
+        "November" -> monthCount = 10
+        "December" -> monthCount = 11
+    }
+    return monthCount
 }
