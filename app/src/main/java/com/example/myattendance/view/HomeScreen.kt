@@ -601,20 +601,20 @@ fun BottomSheetRow(
 }
 
 fun getCountOfSelectedMonth(selectedMonth: String): Int{
-    var monthCount = 0
-    when (selectedMonth){
-        "January" -> monthCount = 0
-        "February" -> monthCount = 1
-        "March" -> monthCount = 2
-        "April" -> monthCount = 3
-        "May" -> monthCount = 4
-        "June" -> monthCount = 5
-        "July" -> monthCount = 6
-        "August" -> monthCount = 7
-        "September" -> monthCount = 8
-        "October" -> monthCount = 9
-        "November" -> monthCount = 10
-        "December" -> monthCount = 11
+    val monthCount = when (selectedMonth){
+        "January" ->  0
+        "February" ->  1
+        "March" ->  2
+        "April" ->  3
+        "May" ->  4
+        "June" ->  5
+        "July" ->  6
+        "August" ->  7
+        "September" ->  8
+        "October" ->  9
+        "November" ->  10
+        "December" ->  11
+        else -> 0
     }
     return monthCount
 }
